@@ -1,0 +1,46 @@
+# =============================
+# Node.js (server + client)
+# =============================
+
+# Dependencies
+node_modules/
+/server/private
+/client/public/backend_req
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Build output
+dist/
+build/
+
+# =============================
+# Frontend (React, Vite, Next.js, etc.)
+# =============================
+
+# Temporary or cache files
+.cache/
+.vite/
+*.tsbuildinfo
+
+# =============================
+# IDE / Editor files
+# =============================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# =============================
+# OS specific files
+# =============================
+.DS_Store
+Thumbs.db

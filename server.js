@@ -3,6 +3,8 @@ import cors from "cors";
 import cookieParser from 'cookie-parser';
 import authenticateToken from './middlewares/authenticateToken.js';
 import startDatabase from "./config/database.js";
+import dotenv from "dotenv";
+dotenv.config();
 
 const app = express();
 

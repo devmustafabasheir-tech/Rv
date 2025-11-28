@@ -24,6 +24,9 @@ app.use(cors({
 import UserRouter from "./routes/userRouter.js";
 app.use("/v1/user", UserRouter);
 
+import PinRouter from "./routes/pinRoute.js";
+app.use("/v1/pin", PinRouter);
+
 const port = process.env.PORT || 8080;
 
 app.get('/', (req, res) => {

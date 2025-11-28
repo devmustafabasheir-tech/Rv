@@ -6,7 +6,7 @@ import {
     get_my_pin, delete_pin, report_pin,
 } from "../controllers/pinController.js";
 
-const router = express.Router(); // توحيد الاسم
+const router = express.Router();
 
 router.post("/create", authenticateToken, new_pin);
 
@@ -27,6 +27,7 @@ router.put("/update/:pinId", authenticateToken, update_pin);
 router.get("/mine", authenticateToken, get_my_pin);
 
 router.delete("/delete/:pinId", authenticateToken, delete_pin);
+
 router.put("/report/:pinId", authenticateToken, report_pin);
 
 

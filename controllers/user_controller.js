@@ -3,9 +3,8 @@ import bcrypt from "bcrypt";
 import User from "../models/UserSchema.js";
 import upload from "../utlis/upload.js";
 import { newUserID } from "../utlis/IDgeneration.js";
+import Pin from "../models/pinSchema.js";
 const secretKey = "king";
-
-
 
 export const login = async (req, res) => {
   try {
@@ -45,57 +44,101 @@ export const login = async (req, res) => {
   }
 };
 
-
-
 export const signup = async (req, res) => {
-    try {
- 
-      const {
-        firstname,
-        lastname,
-        email,
-        password,
-      } = req.body;
+  try {
 
-      if (!password) return res.status(400).json({ message: "Please enter a password." });
-      if (!email) return res.status(400).json({ message: "Email address is required." });
+    const {
+      firstname,
+      lastname,
+      username,
+      email,
+      password,
+    } = req.body;
 
-      if (!firstname || !lastname) {
-        return res.status(400).json({ message: "Both first and last names are required." });
-      }
+    if (!password) return res.status(400).json({ message: "Please enter a password." });
+    if (!email) return res.status(400).json({ message: "Email address is required." });
 
-      const lowerEmail = email.toLowerCase();
+    if (!firstname || !lastname) {
+      return res.status(400).json({ message: "Both first and last names are required." });
+    }
 
-      const existingUser = await User.findOne({ email: lowerEmail });
-      if (existingUser) {
+    const existingUser = await User.findOne({
+      $or: [
+        { email: lowerEmail },
+        { username: username }
+      ]
+    });
+
+    if (existingUser) {
+      if (existingUser.email === lowerEmail) {
         return res.status(409).json({ message: "Email already registered" });
       }
-
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const subid = await newUserID("User");
-
-      const newUser = new User({
-        firstname,
-        lastname,
-        accountStatus: "Active",
-        email: lowerEmail,
-        password: hashedPassword,
-        subid,
-        role: "User"
-       });
-
-      console.log(newUser)
-
-      await newUser.save();
-
-      res.status(201).json({ message: "Registration successful" });
-
-    } catch (err) {
-      console.error("Error registering user:", err);
-      res.status(500).json({ message: "Server error", error: err.message });
+      if (existingUser.username === username) {
+        return res.status(409).json({ message: "Username already registered" });
+      }
     }
+
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const subid = await newUserID("User");
+
+    const newUser = new User({
+      firstname,
+      lastname,
+      accountStatus: "Active",
+      email: lowerEmail,
+      password: hashedPassword,
+      subid,
+      username,
+      role: "user"
+    });
+
+    console.log(newUser)
+
+    await newUser.save();
+
+    res.status(201).json({ message: "Registration successful" });
+
+  } catch (err) {
+    console.error("Error registering user:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
+}
+
+
+export const get_profile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const pins = await Pin.find({ user: userId }).lean();
+    const pinCount = pins.length;
+
+    const user = await User.findById(userId).lean();
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    let reportedPinCount = 0;
+    let reportedPins = [];
+
+    pins.forEach(pin => {
+      if (pin.reportedBy && pin.reportedBy.includes(userId)) {
+        reportedPinCount++;
+        reportedPins.push(pin);
+      }
+    });
+
+    res.status(200).json({
+      user,
+      pinCount,
+      reportedPinCount,
+      reportedPins
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Server Error", error: err.message });
+  }
+};
 
 
 
-export default { login, signup }
+
+export default { login, signup, get_profile }

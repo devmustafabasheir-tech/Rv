@@ -1,13 +1,10 @@
-// blacklist.js
-const blacklist = new Set(); // استخدم مجموعة لتخزين التوكنات المرفوضة
+ const blacklist = new Set();  
 
-// وظيفة لإضافة توكن إلى قائمة الحظر
-function addToBlacklist(token) {
+ function addToBlacklist(token) {
     blacklist.add(token);
 }
 
-// وظيفة للتحقق مما إذا كان التوكن مرفوضًا
-function isTokenBlacklisted(token) {
+ function isTokenBlacklisted(token) {
     return blacklist.has(token);
 }
 

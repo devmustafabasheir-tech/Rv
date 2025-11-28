@@ -1,16 +1,16 @@
 import crypto from "crypto";
 import User from "../models/UserSchema.js";
-//import POS from "../models/POSinvoice.js";
+import Pin from "../models/pinSchema.js";
 
 const prefixMap = {
 
   User: "USR",
-  //POS: "POS",
+  Pin: "PIN",
 
 };
 
 const modelMap = {
-  //POS,
+  Pin,
 };
 
 export async function newUserID() {
@@ -29,9 +29,9 @@ export async function newUserID() {
 }
 
 
-/**export async function createID(reason, userId) {
+export async function createID(reason) {
   if (!reason || !prefixMap[reason] || !modelMap[reason]) {
-    throw new Error("❌ Invalid reason or model type.");
+    throw new Error("  Invalid reason or model type.");
   }
 
   const prefix = prefixMap[reason];
@@ -39,10 +39,7 @@ export async function newUserID() {
   const year = new Date().getFullYear().toString().slice(-2);
   const regex = new RegExp(`^${prefix}-${year}-\\d{5}$`);
 
-  let lastRecord = await model.findOne({
-    subid: { $regex: regex },
-    ...(reason !== "User" && { user: userId }),
-  }).sort({ createdAt: -1 }).lean();
+  let lastRecord = await model.findOne({ subid: { $regex: regex } }).sort({ createdAt: -1 }).lean();
 
   let lastNumber = 0;
   if (lastRecord?.subid) {
@@ -63,7 +60,7 @@ export async function newUserID() {
   }
 
   return newSubId;
-} */
+}
 
-export default [/*createID*/, newUserID];
+export default [createID, newUserID];
 

@@ -11,11 +11,11 @@ export const login = async (req, res) => {
   try {
     const { password, userEmail } = req.body;
 
-    if(!userEmail){
-      return res.status(400).json({message: "Email is required"});
+    if (!userEmail) {
+      return res.status(400).json({ message: "Email is required" });
     }
-      if(!password){
-      return res.status(400).json({message: "Password is required"});
+    if (!password) {
+      return res.status(400).json({ message: "Password is required" });
     }
 
     const lowerEmail = userEmail.toLowerCase();
@@ -91,7 +91,6 @@ export const signup = async (req, res) => {
       username,
       role: "user"
     });
-
     await newUser.save();
 
     res.status(201).json({ message: "Registration successful" });
@@ -117,12 +116,68 @@ export const get_profile = async (req, res) => {
     let reportedPins = pins.filter(p => p.reportedBy === userId);
     let reportedPinCount = reportedPins.length;
 
+    delete user.password;
+
     res.status(200).json({
       user,
       pins,
       pinCount,
       reportedPinCount,
       reportedPins
+    });
+
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Server Error", error: err.message });
+  }
+};
+
+export const get_users = async (req, res) => {
+  try {
+    const userRole = req.user.role;
+
+    if (userRole !== "admin") {
+      return res.status(403).json({ message: "You are not authorized" });
+    }
+
+    const users = await User.find({}, "-password").lean();
+
+    res.status(200).json({ users });
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Server Error", error: err.message });
+  }
+};
+
+
+export const set_user_role = async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "You are not authorized" });
+    }
+
+    const userId = req.params.userId;
+    const newRole = req.params.newRole; // "admin" أو "user"
+
+    if (!["admin", "user"].includes(newRole)) {
+      return res.status(400).json({ message: "Invalid role" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (user.role === newRole) {
+      return res.status(409).json({ message: `User is already ${newRole}` });
+    }
+
+    user.role = newRole;
+    await user.save();
+
+    res.status(200).json({
+      message: `User with ID: ${user.subid} is now ${newRole}`,
+      user
     });
 
   } catch (err) {
@@ -132,4 +187,5 @@ export const get_profile = async (req, res) => {
 };
 
 
-export default { login, signup, get_profile };
+
+export default { login, signup, get_profile, set_user_role, get_users };

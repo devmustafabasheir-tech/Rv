@@ -3,6 +3,10 @@ import User from "../models/UserSchema.js";
 import Pin from "../models/pinSchema.js"
 import { createID } from "../utlis/IDgeneration.js";
 
+
+// point management for some endpoints tq !@#$%^&*
+
+
 export const new_pin = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -20,27 +24,12 @@ export const new_pin = async (req, res) => {
 
         const { location, infomation, adder, type } = req.body;
 
-        if (!location || !infomation || !adder || !type) {
+        if (!location || !adder || !type) {
             return res.status(400).json({ message: "All fields are required" });
         }
 
-        if (!location.coordinates || location.coordinates.length !== 2) {
+        if (!location.latitude || !location.longitude) {
             return res.status(400).json({ message: "Invalid location coordinates" });
-        }
-
-        const [lng, lat] = location.coordinates;
-
-        const existingPin = await Pin.findOne({
-            location: {
-                $near: {
-                    $geometry: { type: "Point", coordinates: [lng, lat] },
-                    $maxDistance: 5
-                }
-            }
-        });
-
-        if (existingPin) {
-            return res.status(409).json({ message: "A Pin at this location already exists" });
         }
 
         const pinId = await createID("Pin");
@@ -73,8 +62,20 @@ export const get_pin_admin = async (req, res) => {
             return res.status(403).json({ message: "You are not authorized" });
         }
         const pins = await Pin.find().lean();
+        let pendingPinForAddition = [];
+        let pendingPinForDeletion = [];
 
-        res.status(200).json({ pins, message: "ok" });
+        pins.forEach(p => {
+            if (p.isPending === "pending deletion") {
+                pendingPinForDeletion.push(p);
+
+            } else if (p.isPending === "pending addition") {
+                pendingPinForAddition.push(p);
+            }
+
+        });
+
+        res.status(200).json({ pins, pendingPinForAddition, pendingPinForDeletion, message: "ok" });
     } catch (err) {
         console.log(err);
         res.status(500).json({ message: "Server Error", error: err.message });
@@ -132,6 +133,9 @@ export const handel_pin = async (req, res) => {
 
 export const get_pin_by_id = async (req, res) => {
     try {
+         if (userRole !== "admin") {
+            return res.status(403).json({ message: "You are not authorized" });
+        }
         const pin = await Pin.findById(req.params.pinId).lean();
         if (!pin) return res.status(404).json({ message: "Pin not found" });
         res.status(200).json({ pin });
@@ -298,7 +302,6 @@ export const delete_pin = async (req, res) => {
         res.status(500).json({ message: "Server Error", error: err.message });
     }
 };
-
 
 
 

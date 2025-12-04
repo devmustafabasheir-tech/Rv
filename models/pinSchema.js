@@ -4,8 +4,8 @@ const { Schema, model, Types } = mongoose;
 const pinSchema = new Schema({
     pinId: { type: String, required: true, unique: true },
     location: {
-        type: { type: String, enum: ['Point'], default: 'Point' },
-        coordinates: { type: [Number], required: true }
+        longitude: { type: Number, required: true },
+        latitude: { type: Number, required: true },
     },
     adder: { type: String, trim: true, required: true },
     infomation: { type: String, trim: true, required: true },

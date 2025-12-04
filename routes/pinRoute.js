@@ -8,15 +8,15 @@ import {
 
 const router = express.Router();
 
-router.post("/create", authenticateToken, new_pin);
+router.post("/create", authenticateToken, new_pin);//
 
-router.get("/admin/list", authenticateToken, get_pin_admin);
+router.get("/admin/list", authenticateToken, get_pin_admin);//
 
-router.get("/list", authenticateToken, get_pin_user);
+router.get("/list", authenticateToken, get_pin_user);//
 
 router.put("/center/:action/:pinId", authenticateToken, handel_pin);
 
-router.get("/find/:pinId", authenticateToken, get_pin_by_id);
+router.get("/find/:pinId", authenticateToken, get_pin_by_id);//
 
 router.get("/find/nearby", authenticateToken, pins_nearby);
 

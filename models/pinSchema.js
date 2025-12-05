@@ -12,24 +12,25 @@ const pinSchema = new Schema({
 
     type: {
         type: String,
-        enum: ["Recycling Bin", "Centre", "Donation Bin"],
+        enum: ["Recycling Bin", "Recycling Centre", "Donation Bin",
+            "Donation Centre"
+        ],
         required: true
     },
-
-    status: {
+     status: {
         type: String,
         enum: ["pending", "rejected", "approved"],
         required: true
     },
 
-    isPending: {
+    isPending: { // or pending reason
         type: String,
         enum: ["active", "pending deletion", "pending addition"],
         default: "active"
     },
 
     handeldBy: { type: String, trim: true },
-    reportedBy: { type: String, trim: true },
+    reportedBy: [{ type: String, trim: true }],
 
     user: { type: Types.ObjectId, ref: 'User' },
 

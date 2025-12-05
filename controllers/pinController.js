@@ -111,8 +111,11 @@ export const handel_pin = async (req, res) => {
 
 
         if (action === "r") {
-            await Pin.findByIdAndDelete(pinId);
-            actionStatus = "Rejected and Deleted";
+            reqPin.isPending = "pending addition";
+            reqPin.status = "rejected";
+            reqPin.handeldBy = userId
+            await reqPin.save();
+            actionStatus = "rejecteded";
         } else if (action === "a") {
             reqPin.isPending = "active";
             reqPin.status = "approved";
@@ -133,7 +136,7 @@ export const handel_pin = async (req, res) => {
 
 export const get_pin_by_id = async (req, res) => {
     try {
-         if (userRole !== "admin") {
+        if (userRole !== "admin") {
             return res.status(403).json({ message: "You are not authorized" });
         }
         const pin = await Pin.findById(req.params.pinId).lean();
@@ -149,25 +152,46 @@ export const pins_nearby = async (req, res) => {
     try {
         const lng = parseFloat(req.query.lng);
         const lat = parseFloat(req.query.lat);
-        const radius = parseInt(req.query.radius) || 500;
+        const radius = parseInt(req.query.radius) || 500; 
 
-        if (!lng || !lat) return res.status(400).json({ message: "Coordinates required" });
+        if (isNaN(lng) || isNaN(lat)) {
+            return res.status(400).json({ message: "Coordinates required" });
+        }
 
-        const pins = await Pin.find({
-            location: {
-                $near: {
-                    $geometry: { type: "Point", coordinates: [lng, lat] },
-                    $maxDistance: radius
-                }
-            },
-            status: "approved"
-        }).lean();
+        const pins = await Pin.find({ status: "approved" }).lean();
 
-        if (pins.length === 0) {
+        const haversine = (lat1, lon1, lat2, lon2) => {
+            const R = 6371000; 
+            const toRad = deg => deg * Math.PI / 180;
+
+            const dLat = toRad(lat2 - lat1);
+            const dLon = toRad(lon2 - lon1);
+
+            const a =
+                Math.sin(dLat / 2) ** 2 +
+                Math.cos(toRad(lat1)) *
+                Math.cos(toRad(lat2)) *
+                Math.sin(dLon / 2) ** 2;
+
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c; 
+        };
+
+        const nearbyPins = pins.filter(pin => {
+            const dist = haversine(
+                lat,
+                lng,
+                pin.location.latitude,
+                pin.location.longitude
+            );
+            return dist <= radius;
+        });
+
+        if (nearbyPins.length === 0) {
             return res.status(404).json({ message: "No Pins found nearby" });
         }
 
-        res.status(200).json({ pins });
+        res.status(200).json({ pins: nearbyPins });
     } catch (err) {
         console.log(err);
         res.status(500).json({ message: "Server Error", error: err.message });
@@ -239,6 +263,8 @@ export const update_pin = async (req, res) => {
         if (type) pin.type = type;
         if (location) pin.location = location;
         if (adder) pin.adder = adder;
+        pin.status = "pending";
+        pin.isPending = "pending addition";
 
         await pin.save();
 
@@ -276,6 +302,7 @@ export const report_pin = async (req, res) => {
         }
 
         pin.isPending = "pending deletion";
+        pin.status = "pending";
 
         await pin.save();
 

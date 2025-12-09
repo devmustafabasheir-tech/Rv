@@ -30,7 +30,7 @@ const pinSchema = new Schema({
     },
 
     handeldBy: { type: String, trim: true },
-    reportedBy: [{ type: String, trim: true }],
+    reportedBy: { type: String, trim: true },
 
     user: { type: Types.ObjectId, ref: 'User' },
 

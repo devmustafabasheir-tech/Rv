@@ -24,13 +24,14 @@ router.put("/report/:pinId", authenticateToken, report_pin);//
 
 router.get("/find/nearby", authenticateToken, pins_nearby);
 
+router.put("/center/:action/:pinId", authenticateToken, handel_pin);
+
 //first !@#$%^&*()
 
 router.get("/search", authenticateToken, search_pins);
 
 router.get("/mine", authenticateToken, get_my_pin);
 
-router.put("/center/:action/:pinId", authenticateToken, handel_pin);
 
 
 

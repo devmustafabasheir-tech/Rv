@@ -94,39 +94,79 @@ export const get_pin_user = async (req, res) => {
 
 export const handel_pin = async (req, res) => {
     try {
-        const userId = req.user.id;
+        const adminId = req.user.id;
         const userRole = req.user.role;
-        const action = req.params.action;
-        const pinId = req.params.pinId;
-        let actionStatus = "";
+        const { action, pinId } = req.params;
+
+        const reward_for_create = 20;
+        const reward_for_report = 20;
 
         if (userRole !== "admin") {
             return res.status(403).json({ message: "You are not authorized" });
         }
 
-        const reqPin = await Pin.findById(pinId);
-        if (!reqPin) {
-            return res.status(404).json({ message: "Pin not found" });
-        }
+        const pin = await Pin.findById(pinId);
+        if (!pin) return res.status(404).json({ message: "Pin not found" });
 
+        let actionStatus = "";
 
+        // ========== Reject new pin ==========
         if (action === "r") {
-            reqPin.isPending = "pending addition";
-            reqPin.status = "rejected";
-            reqPin.handeldBy = userId
-            await reqPin.save();
-            actionStatus = "rejecteded";
+            pin.isPending = "pending addition";
+            pin.status = "rejected";
+            pin.handeldBy = adminId;
+            await pin.save();
+            actionStatus = "rejected";
+
+        // ========== Approve new pin ==========
         } else if (action === "a") {
-            reqPin.isPending = "active";
-            reqPin.status = "approved";
-            reqPin.handeldBy = userId
-            await reqPin.save();
+            const owner = await User.findById(pin.user);
+            if (owner) {
+                owner.point += reward_for_create;
+                await owner.save();
+            }
+
+            pin.isPending = "active";
+            pin.status = "approved";
+            pin.handeldBy = adminId;
+            await pin.save();
             actionStatus = "approved";
+
+        // ========== Delete reported pin ==========
+        } else if (action === "drp") {
+            if (pin.isPending !== "pending deletion") {
+                return res.status(409).json({ message: "Pin is not reported" });
+            }
+
+            // Give reporter points
+            if (pin.reportedBy) {
+                const reporter = await User.findById(pin.user);
+                if (reporter) {
+                    reporter.point += reward_for_report;
+                    await reporter.save();
+                }
+            }
+
+            await pin.deleteOne();
+            actionStatus = "deleted";
+
+        // ========== Reject report and keep pin ==========
+        } else if (action === "rrp") {
+            pin.isPending = "active";
+            pin.status = "approved";
+            pin.reportedBy = null;
+            pin.handeldBy = adminId;
+            await pin.save();
+            actionStatus = "report rejected";
+
         } else {
             return res.status(400).json({ message: "Invalid action" });
         }
 
-        res.status(200).json({ pin: pinId, message: `Pin ${actionStatus}` });
+        res.status(200).json({
+            pin: pinId,
+            message: `Pin ${actionStatus}`
+        });
 
     } catch (err) {
         console.log(err);
@@ -152,7 +192,7 @@ export const pins_nearby = async (req, res) => {
     try {
         const lng = parseFloat(req.query.lng);
         const lat = parseFloat(req.query.lat);
-        const radius = parseInt(req.query.radius) || 500; 
+        const radius = parseInt(req.query.radius) || 500;
 
         if (isNaN(lng) || isNaN(lat)) {
             return res.status(400).json({ message: "Coordinates required" });
@@ -161,7 +201,7 @@ export const pins_nearby = async (req, res) => {
         const pins = await Pin.find({ status: "approved" }).lean();
 
         const haversine = (lat1, lon1, lat2, lon2) => {
-            const R = 6371000; 
+            const R = 6371000;
             const toRad = deg => deg * Math.PI / 180;
 
             const dLat = toRad(lat2 - lat1);
@@ -174,7 +214,7 @@ export const pins_nearby = async (req, res) => {
                 Math.sin(dLon / 2) ** 2;
 
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            return R * c; 
+            return R * c;
         };
 
         const nearbyPins = pins.filter(pin => {
@@ -296,11 +336,10 @@ export const report_pin = async (req, res) => {
         const pin = await Pin.findById(pinId);
         if (!pin) return res.status(404).json({ message: "Pin not found" });
 
-        if (!pin.reportedBy) pin.reportedBy = [];
-        if (!pin.reportedBy.includes(userId)) {
-            pin.reportedBy.push(userId);
-        }
+        if (pin.reportedBy)
+            return res.status(409).json({ message: "Pin already reported" });
 
+        pin.reportedBy = userId;
         pin.isPending = "pending deletion";
         pin.status = "pending";
 

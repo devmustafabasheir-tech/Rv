@@ -216,4 +216,4 @@ export const del_user = async (req, res) => {
 
 
 
-export default { login, signup, get_profile, set_user_role, get_users };
+export default { login,del_user, signup, get_profile, set_user_role, get_users };

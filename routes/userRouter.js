@@ -1,4 +1,4 @@
-import { login, signup, get_profile, set_user_role, get_users } from "../controllers/user_controller.js";
+import { login, signup, get_profile, set_user_role, del_user, get_users } from "../controllers/user_controller.js";
 import express from "express";
 import authenticateToken from "../middlewares/authenticateToken.js";
 
@@ -9,7 +9,7 @@ router.post("/signup", signup);
 router.get("/profile", authenticateToken, get_profile);
 router.put("/change/role/:userId/:newRole", authenticateToken, set_user_role);
 router.get("/users", authenticateToken, get_users);
-router.delete("/delete/:userid", authenticateToken, get_users);
+router.delete("/delete/:userid", authenticateToken, del_user);
 
 
 export default router;

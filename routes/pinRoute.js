@@ -5,10 +5,11 @@ import {
     get_pin_by_id, pins_nearby, search_pins, update_pin,
     get_my_pin, delete_pin, report_pin,
 } from "../controllers/pinController.js";
+import upload from "../utlis/upload.js";  
 
 const router = express.Router();
 
-router.post("/create", authenticateToken, new_pin);//
+router.post("/create",authenticateToken, upload.single("image"), new_pin);
 
 router.get("/admin/list", authenticateToken, get_pin_admin);//
 

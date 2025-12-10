@@ -31,7 +31,7 @@ export async function newUserID() {
 
 export async function createID(reason) {
   if (!reason || !prefixMap[reason] || !modelMap[reason]) {
-    throw new Error("  Invalid reason or model type.");
+    throw new Error("Invalid reason or model type.");
   }
 
   const prefix = prefixMap[reason];
@@ -39,28 +39,34 @@ export async function createID(reason) {
   const year = new Date().getFullYear().toString().slice(-2);
   const regex = new RegExp(`^${prefix}-${year}-\\d{5}$`);
 
-  let lastRecord = await model.findOne({ subid: { $regex: regex } }).sort({ createdAt: -1 }).lean();
+  const field = reason === "Pin" ? "pinId" : "subid";
+   let lastRecord = await model
+    .findOne({ [field]: { $regex: regex } })
+    .sort({ createdAt: -1 })
+    .lean();
 
   let lastNumber = 0;
-  if (lastRecord?.subid) {
-    const match = lastRecord.subid.match(/-(\d{5})$/);
+  if (lastRecord?.[field]) {
+    const match = lastRecord[field].match(/-(\d{5})$/);
     if (match) lastNumber = parseInt(match[1], 10);
   }
 
-  let newNumber = (lastNumber + 1).toString().padStart(5, "0");
-  let newSubId = `${prefix}-${year}-${newNumber}`;
+  let newId = `${prefix}-${year}-${(lastNumber + 1).toString().padStart(5, "0")}`;
 
-  let exists = await model.findOne({ subid: newSubId });
-  if (exists) {
-    const randomNumber = crypto.randomInt(0, 99999).toString().padStart(5, "0");
-    newSubId = `${prefix}-${year}-${randomNumber}`;
-    exists = await model.findOne({ subid: newSubId });
-
-    if (exists) return await createID(reason, userId);
+  // retry لو حصل تصادم نادر
+  let attempts = 0;
+  while (await model.findOne({ [field]: newId }) && attempts < 5) {
+    const random = crypto.randomInt(0, 99999).toString().padStart(5, "0");
+    newId = `${prefix}-${year}-${random}`;
+    attempts++;
   }
 
-  return newSubId;
+  if (attempts === 5) throw new Error("Cannot generate unique ID");
+
+  return newId;
 }
+
+
 
 export default [createID, newUserID];
 

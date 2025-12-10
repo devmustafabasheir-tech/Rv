@@ -13,8 +13,7 @@ const pinSchema = new Schema({
     type: {
         type: String,
         enum: ["Recycling Bin", "Recycling Centre", "Donation Bin",
-            "Donation Centre"
-        ],
+            "Donation Centre"],
         required: true
     },
      status: {

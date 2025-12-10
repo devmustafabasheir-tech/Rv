@@ -3,10 +3,6 @@ import User from "../models/UserSchema.js";
 import Pin from "../models/pinSchema.js"
 import { createID } from "../utlis/IDgeneration.js";
 
-
-// point management for some endpoints tq !@#$%^&*
-
-
 export const new_pin = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -28,11 +24,28 @@ export const new_pin = async (req, res) => {
             return res.status(400).json({ message: "All fields are required" });
         }
 
-        if (!location.latitude || !location.longitude) {
+        location.latitude = parseFloat(location.latitude);
+        location.longitude = parseFloat(location.longitude);
+
+        if (isNaN(location.latitude) || isNaN(location.longitude)) {
             return res.status(400).json({ message: "Invalid location coordinates" });
         }
 
         const pinId = await createID("Pin");
+ 
+        /**
+         *  let imageUrl = null;
+ 
+         if (req.file) {
+             const result = await uploadToImgbb(req.file.buffer, process.env.IMGBB_KEY);
+ 
+             if (!result.success) {
+                 return res.status(500).json({ message: "Image upload failed", error: result.error });
+             }
+ 
+             imageUrl = result.url;
+         }
+         */
 
         const newPin = new Pin({
             pinId,
@@ -42,7 +55,7 @@ export const new_pin = async (req, res) => {
             type,
             user: userId,
             status,
-            isPending
+            isPending,
         });
 
         await newPin.save();
@@ -50,6 +63,10 @@ export const new_pin = async (req, res) => {
         return res.status(201).json({ message: "Pin created successfully" });
 
     } catch (err) {
+        /**if (err.code === "LIMIT_FILE_SIZE") {
+            return res.status(400).json({ message: "File too large. Max 5MB allowed." });
+        } */
+
         console.log(err);
         res.status(500).json({ message: "Server Error", error: err.message });
     }
@@ -118,7 +135,7 @@ export const handel_pin = async (req, res) => {
             await pin.save();
             actionStatus = "rejected";
 
-        // ========== Approve new pin ==========
+            // ========== Approve new pin ==========
         } else if (action === "a") {
             const owner = await User.findById(pin.user);
             if (owner) {
@@ -132,7 +149,7 @@ export const handel_pin = async (req, res) => {
             await pin.save();
             actionStatus = "approved";
 
-        // ========== Delete reported pin ==========
+            // ========== Delete reported pin ==========
         } else if (action === "drp") {
             if (pin.isPending !== "pending deletion") {
                 return res.status(409).json({ message: "Pin is not reported" });
@@ -150,7 +167,7 @@ export const handel_pin = async (req, res) => {
             await pin.deleteOne();
             actionStatus = "deleted";
 
-        // ========== Reject report and keep pin ==========
+            // ========== Reject report and keep pin ==========
         } else if (action === "rrp") {
             pin.isPending = "active";
             pin.status = "approved";

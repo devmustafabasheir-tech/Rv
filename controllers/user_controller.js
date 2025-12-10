@@ -186,6 +186,34 @@ export const set_user_role = async (req, res) => {
   }
 };
 
+export const del_user = async (req, res) => {
+  try {
+    const userRole = req.user?.role;
+
+    if (!userRole || userRole.toLowerCase() !== "admin") {
+      return res.status(403).json({ message: "You are not authorized" });
+    }
+
+    const userID = req.params.userid;
+
+    if (!mongoose.Types.ObjectId.isValid(userID)) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+
+     const deletedUser = await User.findByIdAndDelete(userID);
+
+    if (!deletedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ message: `User with ID: ${userID} has been deleted` });
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Server Error", error: err.message });
+  }
+};
+
 
 
 export default { login, signup, get_profile, set_user_role, get_users };

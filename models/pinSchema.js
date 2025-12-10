@@ -8,7 +8,7 @@ const pinSchema = new Schema({
         latitude: { type: Number, required: true },
     },
     adder: { type: String, trim: true, required: true },
-    infomation: { type: String, trim: true, required: true },
+    infomation: { type: String, trim: true, required: false },
 
     type: {
         type: String,

@@ -9,6 +9,7 @@ router.post("/signup", signup);
 router.get("/profile", authenticateToken, get_profile);
 router.put("/change/role/:userId/:newRole", authenticateToken, set_user_role);
 router.get("/users", authenticateToken, get_users);
+router.delete("/delete/:userid", authenticateToken, get_users);
 
 
 export default router;

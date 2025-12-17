@@ -13,7 +13,7 @@ router.post("/create",authenticateToken, upload.single("image"), new_pin);
 
 router.get("/admin/list", authenticateToken, get_pin_admin);//
 
-router.get("/list", authenticateToken, get_pin_user);//
+router.get("/list", get_pin_user);//
 
 router.get("/find/:pinId", authenticateToken, get_pin_by_id);//
 

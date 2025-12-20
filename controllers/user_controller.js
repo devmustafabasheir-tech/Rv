@@ -51,7 +51,6 @@ export const login = async (req, res) => {
   }
 };
 
-
 // ================= SIGNUP =====================
 export const signup = async (req, res) => {
   try {
@@ -100,7 +99,6 @@ export const signup = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
-
 
 // ================= GET PROFILE =====================
 export const get_profile = async (req, res) => {
@@ -200,7 +198,7 @@ export const del_user = async (req, res) => {
       return res.status(400).json({ message: "Invalid user ID" });
     }
 
-     const deletedUser = await User.findByIdAndDelete(userID);
+    const deletedUser = await User.findByIdAndDelete(userID);
 
     if (!deletedUser) {
       return res.status(404).json({ message: "User not found" });
@@ -214,6 +212,28 @@ export const del_user = async (req, res) => {
   }
 };
 
+export const leaderboard = async (req, res) => {
+  try {
+    const leaderboard = await User.find({})
+      .select('lastname firstname username point')
+      .sort({ point: -1 })
+      .limit(10);
+
+    return res.status(200).json({
+      message: 'ok',
+      leaderboard
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      message: "Server Error",
+      error: err.message
+    });
+  }
+};
 
 
-export default { login,del_user, signup, get_profile, set_user_role, get_users };
+
+
+export default { login, del_user, signup, get_profile, set_user_role, get_users, leaderboard };

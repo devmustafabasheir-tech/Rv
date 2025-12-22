@@ -7,7 +7,7 @@ const userSchema = new Schema({
   lastname: { type: String, trim: true },
   username: { type: String, required: true, unique: true },
 
-  point: { type: String, required: true, default: 0, trim: true },
+  point: { type: Number, required: true, default: 0, trim: true },
   email: { type: String, trim: true, lowercase: true, required: true, unique: true },
 
   password: { type: String, required: true },

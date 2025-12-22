@@ -32,7 +32,7 @@ export const new_pin = async (req, res) => {
         }
 
         const pinId = await createID("Pin");
- 
+
         /**
          *  let imageUrl = null;
  
@@ -150,14 +150,14 @@ export const handel_pin = async (req, res) => {
             actionStatus = "approved";
 
             // ========== Delete reported pin ==========
-        } else if (action === "drp") {
+        }
+        else if (action === "drp") {
             if (pin.isPending !== "pending deletion") {
                 return res.status(409).json({ message: "Pin is not reported" });
             }
 
-            // Give reporter points
             if (pin.reportedBy) {
-                const reporter = await User.findById(pin.user);
+                const reporter = await User.findById(pin.reportedBy);
                 if (reporter) {
                     reporter.point += reward_for_report;
                     await reporter.save();
@@ -166,9 +166,8 @@ export const handel_pin = async (req, res) => {
 
             await pin.deleteOne();
             actionStatus = "deleted";
-
-            // ========== Reject report and keep pin ==========
-        } else if (action === "rrp") {
+        }
+        else if (action === "rrp") {
             pin.isPending = "active";
             pin.status = "approved";
             pin.reportedBy = null;
